@@ -1,0 +1,38 @@
+# a. Import packages
+import tensorflow as tf
+from tensorflow.keras import layers, models
+import matplotlib.pyplot as plt
+
+# b. Load MNIST data
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+x_train, x_test = x_train / 255.0, x_test / 255.0   # Normalize data
+
+# c. Define model
+model = models.Sequential([
+    layers.Flatten(input_shape=(28, 28)),   # Convert image to 1D
+    layers.Dense(128, activation='relu'),   # Hidden layer
+    layers.Dense(10, activation='softmax')  # Output layer
+])
+
+# d. Compile and train (SGD optimizer)
+model.compile(optimizer='sgd', 
+              loss='sparse_categorical_crossentropy', 
+              metrics=['accuracy'])
+history = model.fit(x_train, y_train, epochs=5, validation_data=(x_test, y_test))
+
+# e. Evaluate model
+loss, acc = model.evaluate(x_test, y_test)
+print("Test Accuracy:", acc)
+
+# f. Plot accuracy and loss
+plt.plot(history.history['accuracy'], label='Train Acc')
+plt.plot(history.history['val_accuracy'], label='Test Acc')
+plt.legend()
+plt.title('Accuracy')
+plt.show()
+
+plt.plot(history.history['loss'], label='Train Loss')
+plt.plot(history.history['val_loss'], label='Test Loss')
+plt.legend()
+plt.title('Loss')
+plt.show()
