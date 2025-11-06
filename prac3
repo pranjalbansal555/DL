@@ -1,0 +1,67 @@
+# simple_cifar_cnn.py
+import tensorflow as tf
+from tensorflow.keras import layers, models
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.metrics import classification_report
+
+# a. Load & preprocess
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+y_train = y_train.reshape(-1)    # shape (50000,)
+y_test = y_test.reshape(-1)
+x_train = x_train.astype("float32") / 255.0
+x_test  = x_test.astype("float32")  / 255.0
+
+# b. Model architecture (small CNN - appropriate for images)
+model = models.Sequential([
+    layers.Conv2D(32, 3, activation='relu', input_shape=(32,32,3)),
+    layers.MaxPooling2D(2),
+    layers.Conv2D(64, 3, activation='relu'),
+    layers.MaxPooling2D(2),
+    layers.Flatten(),
+    layers.Dense(64, activation='relu'),
+    layers.Dense(10, activation='softmax')
+])
+
+model.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=0.01, momentum=0.9),
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+model.summary()
+
+# c. Train
+history = model.fit(x_train, y_train, epochs=10, batch_size=64,
+                    validation_data=(x_test, y_test))
+
+# d. Estimate performance
+test_loss, test_acc = model.evaluate(x_test, y_test, verbose=0)
+print(f"\nTest accuracy: {test_acc:.4f}   Test loss: {test_loss:.4f}")
+
+# Predictions + classification report
+y_pred = model.predict(x_test)
+y_pred_classes = np.argmax(y_pred, axis=1)
+print("\nClassification report:\n")
+print(classification_report(y_test, y_pred_classes, digits=4))
+
+# Plot training curves
+plt.figure(figsize=(10,4))
+plt.subplot(1,2,1)
+plt.plot(history.history['accuracy'], label='train_acc')
+plt.plot(history.history['val_accuracy'], label='val_acc')
+plt.legend(); plt.title('Accuracy'); plt.xlabel('epoch')
+
+plt.subplot(1,2,2)
+plt.plot(history.history['loss'], label='train_loss')
+plt.plot(history.history['val_loss'], label='val_loss')
+plt.legend(); plt.title('Loss'); plt.xlabel('epoch')
+
+plt.tight_layout()
+plt.show()
+
+# Quick sample prediction display
+classes = ["airplane","automobile","bird","cat","deer","dog","frog","horse","ship","truck"]
+idx = 5
+plt.imshow(x_test[idx])
+plt.title(f"True: {classes[y_test[idx]]}  Pred: {classes[y_pred_classes[idx]]}")
+plt.axis('off')
+plt.show()
